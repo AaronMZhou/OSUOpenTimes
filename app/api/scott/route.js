@@ -1,6 +1,9 @@
 // web/web/app/api/scott/route.js
 import { NextResponse } from 'next/server';
-import { scrapeScott } from '../../scrapers.js'; 
+import { scrapeScott } from '../../scrapers.js';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // optional, avoids static caching
 
 export async function GET() {
   try {
