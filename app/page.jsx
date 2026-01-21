@@ -7,21 +7,29 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('/api/scott')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load');
-        return res.json();
-      })
-      .then(setTimes)
-      .catch((err) => setError(err.message));
+    const loadTimes = async () => {
+      try {
+        const res = await fetch('/api/scott');
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          const message = data?.error || 'Failed to load';
+          throw new Error(message);
+        }
+        setTimes(data);
+      } catch (err) {
+        setError(err?.message || 'Failed to load');
+      }
+    };
+
+    loadTimes();
   }, []);
 
   if (error) return <div>Error: {error}</div>;
-  if (!times) return <div>Loading Scott hours…</div>;
+  if (!times) return <div>Loading Scott hours...</div>;
 
   return (
     <main style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
-      <h1>Traditions at Scott – Hours</h1>
+      <h1>Traditions at Scott Hours</h1>
       <ul>
         <li>{times.scott1RawText}</li>
         <li>{times.scott2RawText}</li>
@@ -31,3 +39,4 @@ export default function Home() {
     </main>
   );
 }
+

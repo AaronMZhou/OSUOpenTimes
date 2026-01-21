@@ -1,6 +1,7 @@
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
+import path from 'node:path';
 
 export async function scrapeScott() {
   const executablePath = await resolveExecutablePath();
@@ -46,18 +47,32 @@ async function resolveExecutablePath() {
   if (process.env.CHROME_EXECUTABLE_PATH) return process.env.CHROME_EXECUTABLE_PATH;
   if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
 
+  const localAppData = process.env.LOCALAPPDATA;
+  const programFiles = process.env.PROGRAMFILES;
+  const programFilesX86 = process.env['PROGRAMFILES(X86)'];
+
   const candidates = [
-    'C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
-    'C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe',
+    localAppData && path.join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    localAppData && path.join(localAppData, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+    programFiles && path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    programFiles && path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+    programFilesX86 && path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    programFilesX86 && path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
     '/usr/bin/google-chrome',
     '/usr/bin/chromium-browser',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  ];
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+  ].filter(Boolean);
 
   const localChrome = candidates.find((p) => fs.existsSync(p));
   if (localChrome) return localChrome;
 
-  const chromiumPath = await chromium.executablePath();
+  let chromiumPath = null;
+  try {
+    chromiumPath = await chromium.executablePath();
+  } catch (err) {
+    chromiumPath = null;
+  }
   if (chromiumPath && fs.existsSync(chromiumPath)) return chromiumPath;
 
   return null;
